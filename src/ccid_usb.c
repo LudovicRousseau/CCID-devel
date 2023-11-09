@@ -651,6 +651,34 @@ again:
 				}
 #endif
 
+#ifdef USE_COMPOSITE_AS_MULTISLOT
+				if(VENDOR_KAPELSE == GET_VENDOR(readerID))
+				{
+					max_interface_number=config_desc->bNumInterfaces-1;
+					switch (readerID)
+				 	{
+						case KAPELSE_KAPECV :
+						    /* KAP-eCV : only first interface is a ccid one */
+						    num_CCID_interfaces=1;
+						    break;
+					    
+						case KAPELSE_KAPLIN2 :
+						    /* KAP&LINK2 : only 3 first interfaces are ccid ones */
+						    num_CCID_interfaces=3;
+						    break;
+						    
+						default :
+						    /* Kapelse : all interfaces are ccid ones */
+						    num_CCID_interfaces = config_desc->bNumInterfaces;
+						    break;
+					}
+					
+					if( -1 != num_CCID_interfaces) 
+						DEBUG_INFO2("Kapelse reader is as a multislot reader with %d CCID interfaces!", num_CCID_interfaces);
+					else
+						DEBUG_INFO1("Kapelse reader is not a multislot reader!");
+				}
+#endif
 
 				usb_interface = get_ccid_usb_interface(config_desc, &num);
 				if (usb_interface == NULL)
@@ -730,6 +758,7 @@ again:
 					|| (ACS_ACR1252 == readerID)
 					|| (ACS_ACR1252IMP == readerID)
 					|| (ACS_ACR1552 == readerID)
+					|| (VENDOR_KAPELSE == GET_VENDOR(readerID))
 					|| (FEITIANR502DUAL == readerID))
 				{
 					/* use the next interface for the next "slot" */
