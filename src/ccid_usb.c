@@ -654,7 +654,6 @@ again:
 #ifdef USE_COMPOSITE_AS_MULTISLOT
 				if(VENDOR_KAPELSE == GET_VENDOR(readerID))
 				{
-					max_interface_number=config_desc->bNumInterfaces-1;
 					switch (readerID)
 				 	{
 						case KAPELSE_KAPECV :
@@ -672,6 +671,9 @@ again:
 						    num_CCID_interfaces = config_desc->bNumInterfaces;
 						    break;
 					}
+					
+					/* As CCID interfaces are always the first ones : no offset needed */
+					max_interface_number=num_CCID_interfaces-1;
 					
 					if( -1 != num_CCID_interfaces) 
 						DEBUG_INFO2("Kapelse reader is as a multislot reader with %d CCID interfaces!", num_CCID_interfaces);
