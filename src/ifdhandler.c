@@ -299,6 +299,48 @@ static RESPONSECODE IFDHPolling(DWORD Lun, int timeout)
 	return InterruptRead(reader_index, timeout);
 }
 
+#ifdef SEC1210_SYNC
+static RESPONSECODE IFDHPollingSEC1210(DWORD Lun, int timeout)
+{
+	int reader_index;
+
+	if (-1 == (reader_index = LunToReaderIndex(Lun)))
+		return IFD_COMMUNICATION_ERROR;
+
+	/* log only if DEBUG_LEVEL_PERIODIC is set */
+	if (LogLevel & DEBUG_LEVEL_PERIODIC)
+		DEBUG_INFO4(LOG_STRING " (lun: " DWORD_X ") %d ms",
+			CcidSlots[reader_index].readerName, Lun, timeout);
+
+	DEBUG_CRITICAL("avant wait");
+	/* get the 1st interface descriptor */
+	_ccid_descriptor *ccid_desc = get_ccid_descriptor(reader_index)->sec1210_other_interface;
+	pthread_cond_wait(&ccid_desc->sec1210_cond, &ccid_desc->sec1210_mutex);
+	DEBUG_CRITICAL("après wait");
+
+	return IFD_SUCCESS;
+}
+
+static RESPONSECODE IFDHStopPollingSEC1210(DWORD Lun)
+{
+	int reader_index;
+
+	if (-1 == (reader_index = LunToReaderIndex(Lun)))
+		return IFD_COMMUNICATION_ERROR;
+
+	DEBUG_INFO3(LOG_STRING " (lun: " DWORD_X ")",
+		CcidSlots[reader_index].readerName, Lun);
+
+	_ccid_descriptor *ccid_desc = get_ccid_descriptor(reader_index);
+
+	/* we want to stop the second interface */
+	DEBUG_CRITICAL("signal");
+	pthread_cond_signal(&ccid_desc->sec1210_other_interface->sec1210_cond);
+
+	return IFD_SUCCESS;
+}
+#endif
+
 /* on an ICCD device the card is always inserted
  * so no card movement will ever happen: just do nothing */
 static RESPONSECODE IFDHSleep(DWORD Lun, int timeout)
@@ -522,6 +564,18 @@ EXTERNAL RESPONSECODE IFDHGetCapabilities(DWORD Lun, DWORD Tag,
 						*(void **)Value = IFDHPolling;
 				}
 
+#ifdef SEC1210_SYNC
+				if ((SEC1210 == ccid_desc -> readerID)
+					/* 2nd interface */
+					&& (1 == ccid_desc -> sec1210_interface))
+				{
+					/* 2nd interface has no card presence detector */
+					*Length = sizeof(void *);
+					if (Value)
+						*(void **)Value = IFDHPollingSEC1210;
+				}
+#endif
+
 				if ((PROTOCOL_ICCD_A == ccid_desc->bInterfaceProtocol)
 					|| (PROTOCOL_ICCD_B == ccid_desc->bInterfaceProtocol))
 				{
@@ -567,6 +621,17 @@ EXTERNAL RESPONSECODE IFDHGetCapabilities(DWORD Lun, DWORD Tag,
 					if (Value)
 						*(void **)Value = IFDHStopPolling;
 				}
+
+#ifdef SEC1210_SYNC
+				if ((SEC1210 == ccid_desc -> readerID)
+					/* 2nd inerface */
+					&& (1 == ccid_desc -> sec1210_interface))
+				{
+					*Length = sizeof(void *);
+					if (Value)
+						*(void **)Value = IFDHStopPollingSEC1210;
+				}
+#endif
 			}
 			break;
 #endif
@@ -1993,6 +2058,18 @@ EXTERNAL RESPONSECODE IFDHICCPresence(DWORD Lun)
 		goto end;
 	}
 
+#ifdef SEC1210_SYNC
+	if ((SEC1210 == ccid_descriptor->readerID)
+		&& (1 == ccid_descriptor->sec1210_interface)
+	   )
+	{
+		DEBUG_CRITICAL("2nd interface");
+		/* copy card status from 1st interface */
+		return_value = ccid_descriptor->sec1210_other_interface->dwSlotStatus;
+		goto end;
+	}
+#endif
+
 	/* save the current read timeout computed from card capabilities */
 	oldReadTimeout = ccid_descriptor->readTimeout;
 
@@ -2102,6 +2179,22 @@ EXTERNAL RESPONSECODE IFDHICCPresence(DWORD Lun)
 
 			return_value = IFD_ICC_NOT_PRESENT;
 		}
+	}
+#endif
+
+#ifdef SEC1210_SYNC
+	if (SEC1210 == ccid_descriptor->readerID)
+	{
+		DEBUG_CRITICAL("1st interface");
+		if (ccid_descriptor->dwSlotStatus != return_value)
+		{
+			DEBUG_CRITICAL("status changed");
+			/* the card status changed: signal 2nd interface */
+			pthread_cond_signal(&ccid_descriptor->sec1210_cond);
+		}
+
+		/* store current state */
+		ccid_descriptor->dwSlotStatus = return_value;
 	}
 #endif
 
