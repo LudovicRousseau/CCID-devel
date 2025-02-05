@@ -858,6 +858,28 @@ again:
 				else
 					usbDevice[reader_index].multislot_extension = NULL;
 
+
+#ifdef SEC1210_SYNC
+				if (SEC1210 == readerID)
+				{
+					usbDevice[reader_index].ccid.sec1210_interface = interface;
+
+					if (0 == interface)
+					{
+						DEBUG_CRITICAL("init SEC1210 1st interface");
+						pthread_cond_init(&usbDevice[reader_index].ccid.sec1210_cond, NULL);
+						pthread_mutex_init(&usbDevice[reader_index].ccid.sec1210_mutex, NULL);
+					}
+					else
+					{
+						DEBUG_CRITICAL("init SEC1210 2nd interface");
+						/* point to the previous reader */
+						usbDevice[reader_index].ccid.sec1210_other_interface = &usbDevice[previous_reader_index].ccid;
+						usbDevice[reader_index].ccid.sec1210_other_interface -> sec1210_other_interface = &usbDevice[reader_index].ccid;
+					}
+				}
+#endif
+
 				libusb_free_config_descriptor(config_desc);
 				goto end;
 			}
@@ -1166,6 +1188,18 @@ status_t CloseUSB(unsigned int reader_index)
 		}
 
 		pthread_mutex_destroy(&usbDevice[reader_index].polling_transfer_mutex);
+
+#ifdef SEC1210_SYNC
+		/* close the 2nd interface? */
+		if (1 == usbDevice[reader_index].ccid.sec1210_interface)
+		{
+			/* Free the resources of the 1st interface */
+			DEBUG_CRITICAL("close");
+			_ccid_descriptor *ccid_desc = usbDevice[reader_index].ccid.sec1210_other_interface;
+			pthread_cond_destroy(&ccid_desc->sec1210_cond);
+			pthread_mutex_destroy(&ccid_desc->sec1210_mutex);
+		}
+#endif
 
 		if (usbDevice[reader_index].ccid.gemalto_firmware_features)
 			free(usbDevice[reader_index].ccid.gemalto_firmware_features);
