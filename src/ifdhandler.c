@@ -317,6 +317,8 @@ static RESPONSECODE IFDHPollingSEC1210(DWORD Lun, int timeout)
 	_ccid_descriptor *ccid_desc = get_ccid_descriptor(reader_index)->sec1210_other_interface;
 	pthread_cond_wait(&ccid_desc->sec1210_cond, &ccid_desc->sec1210_mutex);
 	DEBUG_CRITICAL("après wait");
+	sleep(0.1);
+	DEBUG_CRITICAL("after sleep");
 
 	return IFD_SUCCESS;
 }
