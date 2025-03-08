@@ -313,9 +313,9 @@ static RESPONSECODE IFDHPollingSEC1210(DWORD Lun, int timeout)
 			CcidSlots[reader_index].readerName, Lun, timeout);
 
 	DEBUG_CRITICAL("avant wait");
-	/* get the 1st interface descriptor */
-	_ccid_descriptor *ccid_desc = get_ccid_descriptor(reader_index)->sec1210_other_interface;
-	pthread_cond_wait(&ccid_desc->sec1210_shared->sec1210_cond, &ccid_desc->sec1210_shared->sec1210_mutex);
+	_ccid_descriptor *ccid_desc = get_ccid_descriptor(reader_index);
+	pthread_cond_wait(&ccid_desc->sec1210_shared->sec1210_cond,
+		&ccid_desc->sec1210_shared->sec1210_mutex);
 	DEBUG_CRITICAL("après wait");
 
 	return IFD_SUCCESS;
