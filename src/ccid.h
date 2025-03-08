@@ -24,6 +24,13 @@
 // interfaces of the Microchip SEC 1210 reader
 // #define SEC1210_SYNC
 
+#ifdef SEC1210_SYNC
+struct _sec1210_cond {
+	pthread_cond_t sec1210_cond;
+	pthread_mutex_t sec1210_mutex;
+};
+#endif
+
 typedef struct _ccid_descriptor
 {
 	/*
@@ -167,8 +174,7 @@ typedef struct _ccid_descriptor
 #endif
 
 #ifdef SEC1210_SYNC
-	pthread_cond_t sec1210_cond;
-	pthread_mutex_t sec1210_mutex;
+	struct _sec1210_cond * sec1210_shared;
 	struct _ccid_descriptor *sec1210_other_interface;
 	int sec1210_interface;
 #endif

@@ -315,7 +315,7 @@ static RESPONSECODE IFDHPollingSEC1210(DWORD Lun, int timeout)
 	DEBUG_CRITICAL("avant wait");
 	/* get the 1st interface descriptor */
 	_ccid_descriptor *ccid_desc = get_ccid_descriptor(reader_index)->sec1210_other_interface;
-	pthread_cond_wait(&ccid_desc->sec1210_cond, &ccid_desc->sec1210_mutex);
+	pthread_cond_wait(&ccid_desc->sec1210_shared->sec1210_cond, &ccid_desc->sec1210_shared->sec1210_mutex);
 	DEBUG_CRITICAL("après wait");
 
 	return IFD_SUCCESS;
@@ -335,7 +335,7 @@ static RESPONSECODE IFDHStopPollingSEC1210(DWORD Lun)
 
 	/* we want to stop the second interface */
 	DEBUG_CRITICAL("signal");
-	pthread_cond_signal(&ccid_desc->sec1210_other_interface->sec1210_cond);
+	pthread_cond_signal(&ccid_desc->sec1210_shared->sec1210_cond);
 
 	return IFD_SUCCESS;
 }
@@ -2071,7 +2071,10 @@ EXTERNAL RESPONSECODE IFDHICCPresence(DWORD Lun)
 	{
 		DEBUG_CRITICAL("2nd interface");
 		/* copy card status from 1st interface */
-		return_value = ccid_descriptor->sec1210_other_interface->dwSlotStatus;
+		if (ccid_descriptor->sec1210_other_interface)
+			return_value = ccid_descriptor->sec1210_other_interface->dwSlotStatus;
+		else
+			return_value = IFD_ICC_NOT_PRESENT;
 		goto end;
 	}
 #endif
@@ -2196,7 +2199,7 @@ EXTERNAL RESPONSECODE IFDHICCPresence(DWORD Lun)
 		{
 			DEBUG_CRITICAL("status changed");
 			/* the card status changed: signal 2nd interface */
-			pthread_cond_signal(&ccid_descriptor->sec1210_cond);
+			pthread_cond_signal(&ccid_descriptor->sec1210_shared->sec1210_cond);
 		}
 
 		/* store current state */
