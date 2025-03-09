@@ -2066,8 +2066,7 @@ EXTERNAL RESPONSECODE IFDHICCPresence(DWORD Lun)
 
 #ifdef SEC1210_SYNC
 	if ((SEC1210 == ccid_descriptor->readerID)
-		&& (1 == ccid_descriptor->sec1210_interface)
-	   )
+		&& (1 == ccid_descriptor->sec1210_interface))
 	{
 		DEBUG_CRITICAL("2nd interface");
 		/* copy card status from 1st interface */
