@@ -1224,19 +1224,23 @@ status_t CloseUSB(unsigned int reader_index)
 #ifdef SEC1210_SYNC
 		/* close the 2nd interface? */
 		_ccid_descriptor ccid_desc = usbDevice[reader_index].ccid;
-		DEBUG_CRITICAL2("close interface: %d", ccid_desc.sec1210_interface);
-		if (ccid_desc.sec1210_other_interface)
+		if (SEC1210 == ccid_desc.readerID)
 		{
-			/* the other interface is still present?
-			 * unregister ourself from it */
-			ccid_desc.sec1210_other_interface->sec1210_other_interface = NULL;
-		}
-		else
-		{
-			/* Free the shared resources */
-			pthread_cond_destroy(&ccid_desc.sec1210_shared->sec1210_cond);
-			pthread_mutex_destroy(&ccid_desc.sec1210_shared->sec1210_mutex);
-			free(ccid_desc.sec1210_shared);
+			DEBUG_CRITICAL2("close interface: %d", ccid_desc.sec1210_interface);
+			if (ccid_desc.sec1210_other_interface)
+			{
+				/* the other interface is still present?
+				 * unregister ourself from it */
+				ccid_desc.sec1210_other_interface->sec1210_other_interface = NULL;
+			}
+			else
+			{
+				/* 2nd interface is closing */
+				/* Free the shared resources */
+				pthread_cond_destroy(&ccid_desc.sec1210_shared->sec1210_cond);
+				pthread_mutex_destroy(&ccid_desc.sec1210_shared->sec1210_mutex);
+				free(ccid_desc.sec1210_shared);
+			}
 		}
 #endif
 
