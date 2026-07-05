@@ -1756,6 +1756,10 @@ EXTERNAL RESPONSECODE IFDHControl(DWORD Lun, DWORD dwControlCode,
 		int p = 0;
 		int tmp;
 
+		/* should not happen with pcsc-lite */
+		if (RxLength < 1024)
+			return IFD_ERROR_INSUFFICIENT_BUFFER;
+
 		/* wLcdLayout */
 		RxBuffer[p++] = PCSCv2_PART10_PROPERTY_wLcdLayout;	/* tag */
 		RxBuffer[p++] = 2;	/* length */
