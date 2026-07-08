@@ -395,6 +395,9 @@
 # Diebold Nixdorf
 0x2F7C:0x6007:Diebold Nixdorf PN7362au CCID
 
+# DigiFlow LLP.
+0x0A89:0x0035:DigiFlow LLP. KAZTOKEN
+
 # Doctolib
 0x1C34:0xAFD0:Doctolib SR
 0x1C34:0xAFD1:Doctolib SR
