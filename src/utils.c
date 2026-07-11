@@ -59,10 +59,15 @@ void InitReaderIndex(void)
 
 __attribute__ ((destructor)) static void FiniReaderIndex(void)
 {
+	DEBUG_INFO1("Driver destructor");
 	for (int i=0; i<ccid_driver_max_readers; i++)
+	{
 		free(CcidSlots[i]);
+		CcidSlots[i] = NULL;
+	}
 
 	free(CcidSlots);
+	CcidSlots = NULL;
 } /* FiniReaderIndex */
 
 int GetNewReaderIndex(const int Lun)
