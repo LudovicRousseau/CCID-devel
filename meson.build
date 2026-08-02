@@ -182,7 +182,7 @@ endif
 find_program('perl', required : true)
 command = [
     find_program('src/create_Info_plist.pl'),
-    files('readers/supported_readers.txt'),
+    files('src/supported_readers.txt'),
     '@INPUT@',
     '--version=' + meson.project_version(),
     '--target=libccid' + dyn_lib_ext
