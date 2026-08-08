@@ -1136,6 +1136,9 @@
 # RSA
 0x15E1:0x2007:RSA RSA SecurID (R) Authenticator
 
+# SCM Microsystems Inc.
+0x04E6:0x5292:SCM Microsystems Inc. SCL01x Contactless Reader
+
 # SIMHUB
 0x1677:0x0341:SIMHUB pcsc reader
 
@@ -1185,7 +1188,6 @@
 #0x0C4B:0x0300:Reiner-SCT cyberJack pinpad(a)
 
 # SCM Microsystems Inc.
-#0x04E6:0x5292:SCM Microsystems Inc. SCL01x Contactless Reader
 
 # SMART
 #0x0B8C:0x000E:SMART SBV280
