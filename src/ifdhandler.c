@@ -1293,6 +1293,9 @@ EXTERNAL RESPONSECODE IFDHPowerICC(DWORD Lun, DWORD Action,
 	CcidDesc * ccid_reader;
 #ifndef NO_LOG
 	const char *actions[] = { "PowerUp", "PowerDown", "Reset" };
+	const char *action_name = "Unknown";
+	if (Action >= IFD_POWER_UP && Action <= IFD_RESET)
+		action_name = actions[Action - IFD_POWER_UP];
 #endif
 	unsigned int oldReadTimeout;
 	_ccid_descriptor *ccid_descriptor;
@@ -1307,7 +1310,7 @@ EXTERNAL RESPONSECODE IFDHPowerICC(DWORD Lun, DWORD Action,
 		return IFD_COMMUNICATION_ERROR;
 
 	DEBUG_INFO4("action: " LOG_STRING ", " LOG_STRING " (lun: " DWORD_X ")",
-		actions[Action-IFD_POWER_UP], ccid_reader->readerName, Lun);
+		action_name, ccid_reader->readerName, Lun);
 
 	switch (Action)
 	{
@@ -1523,7 +1526,8 @@ EXTERNAL RESPONSECODE IFDHTransmitToICC(DWORD Lun, SCARD_IO_HEADER SendPci,
 
 	/* Pseudo-APDU as defined in PC/SC v2 part 10 supplement document
 	 * CLA=0xFF, INS=0xC2, P1=0x01 */
-	if (0 == memcmp(TxBuffer, "\xFF\xC2\x01", 3))
+	if ((TxLength >= 3)
+		&& (0 == memcmp(TxBuffer, "\xFF\xC2\x01", 3)))
 	{
 		/* Yes, use the same timeout as for SCardControl() */
 		restore_timeout = true;
@@ -1971,7 +1975,8 @@ EXTERNAL RESPONSECODE IFDHControl(DWORD Lun, DWORD dwControlCode,
 	}
 
 	/* MCT: Multifunctional Card Terminal */
-	if (IOCTL_FEATURE_MCT_READER_DIRECT == dwControlCode)
+	if ((IOCTL_FEATURE_MCT_READER_DIRECT == dwControlCode)
+		&& (TxLength >= 5))
 	{
 		if ( (TxBuffer[0] != 0x20)	/* CLA */
 			|| ((TxBuffer[1] & 0xF0) != 0x70)	/* INS */
