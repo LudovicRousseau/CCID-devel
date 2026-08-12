@@ -489,7 +489,7 @@ int t1_transceive(t1_state_t * t1, unsigned int dad,
 				}
 
 				DEBUG_CRITICAL2("CT sent S-block with ifs=%u", sdata[DATA]);
-				if (sdata[DATA] == 0)
+				if ((sdata[DATA] == 0) || (255 == sdata[DATA]))
 					goto resync;
 				t1->ifsc = sdata[DATA];
 				ct_buf_putc(&tbuf, sdata[DATA]);
