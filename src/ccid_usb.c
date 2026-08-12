@@ -2186,6 +2186,15 @@ static void *Multi_ReadProc(void *p_ext)
 		slot = buffer[BSLOT_OFFSET];
 		DEBUG_COMM3("Read %d bytes for slot %d", length, slot);
 
+		/* buffer[BSLOT_OFFSET] is a unsigned char
+		 * so slot can't be negative */
+		if (slot > usb_device->ccid.bMaxSlotIndex)
+		{
+			DEBUG_CRITICAL3("Invalid slot %d (max %d)",
+					slot, usb_device->ccid.bMaxSlotIndex);
+			continue;
+		}
+
 		/* copy and signal */
 		pthread_mutex_lock(&concurrent[slot].slot_mutex);
 
