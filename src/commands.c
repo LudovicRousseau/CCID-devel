@@ -286,6 +286,12 @@ again:
 
 	/* extract the ATR */
 	atr_len = dw2i(resp, 1);	/* ATR length */
+	if (atr_len > length - CCID_RESPONSE_HEADER_SIZE)
+	{
+		DEBUG_CRITICAL3("Short CCID payload: got %u, expected %u",
+			length - CCID_RESPONSE_HEADER_SIZE, atr_len);
+		return IFD_COMMUNICATION_ERROR;
+	}
 	if (atr_len > *nlength)
 		atr_len = *nlength;
 
@@ -956,7 +962,7 @@ RESPONSECODE CmdEscapeCheck(CcidDesc * ccid_reader,
 	unsigned char *cmd_in, *cmd_out;
 	int bSeq;
 	status_t res;
-	unsigned int length_in, length_out;
+	unsigned int length_in, length_out, length_out_read;
 	RESPONSECODE return_value = IFD_SUCCESS;
 	int old_read_timeout = -1;
 	_ccid_descriptor *ccid_descriptor = &ccid_reader->device.ccid;
@@ -1010,6 +1016,7 @@ again:
 time_request:
 	length_out = CCID_HEADER_SIZE + *RxLength;
 	res = ReadPort(ccid_reader, &length_out, cmd_out, bSeq);
+	length_out_read = length_out;
 
 	/* replay the command if NAK
 	 * This (generally) happens only for the first command sent to the reader
@@ -1055,6 +1062,14 @@ time_request:
 
 	/* copy the response */
 	length_out = dw2i(cmd_out, 1);
+	if (length_out > length_out_read - CCID_RESPONSE_HEADER_SIZE)
+	{
+		DEBUG_CRITICAL3("Short CCID payload: got %u, expected %u",
+			length_out_read - CCID_RESPONSE_HEADER_SIZE, length_out);
+		free(cmd_out);
+		return_value = IFD_COMMUNICATION_ERROR;
+		goto end;
+	}
 	if (length_out > *RxLength)
 	{
 		length_out = *RxLength;
