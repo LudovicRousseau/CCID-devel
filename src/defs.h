@@ -91,7 +91,7 @@ typedef struct _ccid_descriptor
 	/*
 	 * Number of available slots
 	 */
-	char bMaxSlotIndex;
+	unsigned char bMaxSlotIndex;
 
 	/*
 	 * Maximum number of slots which can be simultaneously busy
