@@ -374,6 +374,13 @@ static int ReadChunk(CcidDesc * ccid_reader, unsigned char *buffer,
 	(void)snprintf(debug_header, sizeof(debug_header), "<- lun: %X, ",
 		ccid_reader->lun);
 
+	if (min_length > buffer_length)
+	{
+		DEBUG_CRITICAL3("ReadChunk: min_length (%d) > buffer_length (%d)",
+			min_length, buffer_length);
+		return -1;
+	}
+
 	already_read = 0;
 	while (already_read < min_length)
 	{
@@ -397,6 +404,11 @@ static int ReadChunk(CcidDesc * ccid_reader, unsigned char *buffer,
 			}
 
 		rv = read(fd, buffer + already_read, buffer_length - already_read);
+		if (0 == rv)
+		{
+			DEBUG_COMM("read returned 0; aborting to avoid infinite loop");
+			return -1;
+		}
 		if (rv < 0)
 		{
 			DEBUG_COMM2("read error: %s", strerror(errno));
