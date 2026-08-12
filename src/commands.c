@@ -922,6 +922,13 @@ RESPONSECODE SecurePINModify(CcidDesc * ccid_reader,
 		}
 		else
 		{
+			/* this should not happen. It will make Aisle Research happy */
+			if (*RxLength < 4)
+			{
+				ret = IFD_COMMUNICATION_ERROR;
+				goto end;
+			}
+
 			/* get only the T=1 data */
 			/* FIXME: manage T=1 error blocks */
 			memmove(RxBuffer, RxBuffer+3, *RxLength -4);
