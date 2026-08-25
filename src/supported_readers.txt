@@ -944,6 +944,7 @@
 
 # Swissbit
 0x1370:0x0901:Swissbit Secure USB PU-50n SE/PE
+0x1370:0x0911:Swissbit iShield Key 2 Pro
 
 # SYC
 0x0483:0x2017:SYC USB CCID Reader
