@@ -310,6 +310,8 @@ typedef struct
 	struct usbDevice_MultiSlot_Extension *multislot_extension;
 
 	_Atomic bool disconnected;
+
+	int errors_in_a_row;
 } _usbDevice;
 
 typedef _usbDevice _Device;
