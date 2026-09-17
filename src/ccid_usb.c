@@ -800,6 +800,7 @@ again:
 				else
 					usb_device->multislot_extension = NULL;
 
+				usb_device->errors_in_a_row = 0;
 
 #ifdef SEC1210_SYNC
 				if (SEC1210 == readerID)
@@ -967,8 +968,17 @@ status_t WriteUSB(CcidDesc * ccid_reader, unsigned int length,
 		if (LIBUSB_ERROR_NO_DEVICE == rv)
 			return STATUS_NO_SUCH_DEVICE;
 
+		usb_device->errors_in_a_row++;
+		if (usb_device->errors_in_a_row > 10)
+		{
+			DEBUG_CRITICAL("Too many errors: disable the device.");
+			return STATUS_NO_SUCH_DEVICE;
+		}
+
 		return STATUS_UNSUCCESSFUL;
 	}
+	else
+		usb_device->errors_in_a_row = 0;
 
 	return STATUS_SUCCESS;
 } /* WriteUSB */
@@ -1660,10 +1670,20 @@ int InterruptRead(CcidDesc *ccid_reader, int timeout /* in ms */)
 		libusb_free_transfer(transfer);
 		DEBUG_CRITICAL2("libusb_submit_transfer failed: %s",
 			libusb_error_name(ret));
+
+		usb_device->errors_in_a_row++;
+		if (usb_device->errors_in_a_row > 10)
+		{
+			DEBUG_CRITICAL("Too many errors: disable the device.");
+			return STATUS_NO_SUCH_DEVICE;
+		}
+
 		if (LIBUSB_ERROR_NO_DEVICE == ret)
 			return IFD_NO_SUCH_DEVICE;
 		return IFD_COMMUNICATION_ERROR;
 	}
+	else
+		usb_device->errors_in_a_row = 0;
 
 	pthread_mutex_lock(&usb_device->polling_transfer_mutex);
 	usb_device->polling_transfer = transfer;
